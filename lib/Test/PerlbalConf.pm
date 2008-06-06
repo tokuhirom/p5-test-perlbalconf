@@ -30,6 +30,10 @@ sub _parse {
     @ret;
 }
 
+sub _diag(@) { ## no critic
+    $CLASS->builder->diag(@_);
+}
+
 my $command_parser = {
     load => sub {
         my $cmd = shift;
@@ -41,6 +45,7 @@ my $command_parser = {
             return $rv;
         };
         my $rv = $load->($fn) || $load->(lc $fn) || $load->(ucfirst lc $fn);
+        _diag "cannot load module $fn" unless $rv;
     },
     create => sub {
         my $cmd = shift;
@@ -103,8 +108,21 @@ my $command_parser = {
             _die "unknown service '$target' is applied to '$host'" unless $SERVICE{$target};
         };
     },
+    group => sub {
+        # for Perlbal::Plugin::UrlGroup
+        my $cmd = shift;
+        my ($selname, $host, $target) = _parse($cmd, qr/^group\s+(?:(\w+)\s+)?(\S+)\s*=\s*(\w+)$/);
+        unless ($selname ||= $LAST_CREATED) {
+            _die "omitted service name not implied from context";
+        }
+        # TODO: check "Service '$selname' is not a selector service"
+        _die "invalid host pattern: '$host'" unless $host =~ /^[\w\-\_\.\*\;\:]+$/;
+
+        push @FINALIZER, sub {
+            _die "unknown service '$target' is applied to '$host'" unless $SERVICE{$target};
+        };
+    },
 };
-$command_parser->{group} = $command_parser->{vhost}; # for Perlbal::Plugin::UrlGroup
 
 sub perlbal_config_ok {
     my $fname = shift;
@@ -153,7 +171,7 @@ sub _test_manage_command {
     if ($command_parser->{$basecmd}) {
         $command_parser->{$basecmd}->($cmd);
     } else {
-        $CLASS->builder->diag("unknown command $basecmd");
+        _diag "unknown command $basecmd";
     }
 }
 
