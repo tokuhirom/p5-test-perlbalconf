@@ -36,8 +36,8 @@ sub _diag(@) { ## no critic
 
 my $command_parser = {
     load => sub {
-        my $cmd = shift;
-        my ($fn,) = _parse($cmd, qr/^load (\w+)$/);
+        my ($cmd, $orig) = @_;
+        my ($fn,) = _parse($orig, qr/^load (\w+)$/i);
         my $load = sub {
             my $name = shift;
             my $rv = "Perlbal::Plugin::$name"->use;
@@ -169,7 +169,7 @@ sub _test_manage_command {
     my $basecmd = $1;
 
     if ($command_parser->{$basecmd}) {
-        $command_parser->{$basecmd}->($cmd);
+        $command_parser->{$basecmd}->($cmd, $orig);
     } else {
         _diag "unknown command $basecmd";
     }
