@@ -80,6 +80,15 @@ my $command_parser = {
         my ($verb, $name) = _parse($cmd, qr/^(disable|enable) (\w+)$/);
         _die "service '$name' does not exist" unless $SERVICE{$name};
     },
+    pool => sub {
+        my $cmd = shift;
+        my ($command, $name, $ip, $port) = _parse($cmd, qr/^pool (\w+) (\w+) (\d+.\d+.\d+.\d+)(?::(\d+))?$/);
+        my $good_cmd = qr/^(?:add|remove)$/;
+        # "add" and "remove" can be in either order
+        ($command, $name) = ($name, $command) if $name =~ /$good_cmd/;
+        _die "Invalid command:  must be 'add' or 'remove'" unless $command =~ /$good_cmd/;
+        _die "unknown pool : $name" unless $POOL{$name};
+    },
     vhost => sub {
         # see Perlbal::Plugin::Vhosts
         my $cmd = shift;
@@ -95,6 +104,7 @@ my $command_parser = {
         };
     },
 };
+$command_parser->{group} = $command_parser->{vhost}; # for Perlbal::Plugin::UrlGroup
 
 sub perlbal_config_ok {
     my $fname = shift;
