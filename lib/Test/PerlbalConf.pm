@@ -216,6 +216,8 @@ Tokuhiro Matsuno E<lt>tokuhirom AAJKLFJEF GMAIL COME<gt>
 
 =head1 SEE ALSO
 
+L<Perlbal>
+
 =head1 LICENSE
 
 This library is free software; you can redistribute it and/or modify
